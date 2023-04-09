@@ -107,24 +107,6 @@ void print_matrix(matrix mat){
 }
 
 void info_matrix(matrix mat){
-    for(int i = 0; i < mat.shape[0]; i++){
-        if (i < INFO_HEAD || i >= mat.shape[0]-INFO_HEAD){
-            for(int j = 0; j < mat.shape[1]; j++){
-                if(j < mat.shape[1]-INFO_HEAD){
-                    int ind = index_2d(i, j, mat.shape);
-                    printf("%f ", mat.data[ind]);
-                }
-                if(j == INFO_HEAD){
-                    printf(" ... ");
-                }
-            }
-            printf("\n");
-        }
-        if(i == INFO_HEAD){
-            printf(" ... \n");
-        }
-    }
-
     printf("shape=(%d, %d), size=%d, dim=%d\n", mat.shape[0], mat.shape[1], mat.size, mat.shape_len);
 }
 
