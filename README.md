@@ -4,7 +4,7 @@ Simple matrix library for handling 1d arrays as 2d matrices and vectors via [Row
 
 ## Features
 
-* Pseudo-random generator for gaussian distributed number
+* Pseudo-random generator for gaussian distributed numbers
 * Matrix object for handling data, and shape+size properties
 * Tools for applying linear algebra techniques such as matrix multplication, transpose, addition, elmentwise functions
 * Logistic Regression model that takes input data and weights+biases
