@@ -220,7 +220,7 @@ double MSL(matrix matA, matrix matB){
 
 void* MSL_dx(matrix matA, matrix matB, matrix matC){
     for(int i = 0; i < matA.size; i++){
-        matC.data[i] = (-2/(float)matA.size) * (matA.data[i]-matB.data[i]);
+        matC.data[i] = (-2/(double)matA.size) * (matA.data[i]-matB.data[i]);
     }
 
 
