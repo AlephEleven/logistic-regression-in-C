@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include <time.h>
 
 
 #define ARRAY_BUFFER 2048
-#define INFO_HEAD 5
 #define MAT_2D 2
 
 #define NORM_MEAN 0
@@ -19,6 +17,13 @@ typedef struct matrix {
     int shape_len;
     int size;
 } matrix;
+
+
+
+#define GEN_MATRIX(DATA_NAME, SHAPE_NAME, MAT_NAME, MAT_SHAPEX, MAT_SHAPEY) double DATA_NAME[ARRAY_BUFFER];\
+                             int SHAPE_NAME[2] = {MAT_SHAPEX, MAT_SHAPEY}; \
+                             matrix MAT_NAME = {.data=DATA_NAME, .shape=SHAPE_NAME}; \
+                             update_mat(&MAT_NAME, MAT_2D);
 
 /*
 
@@ -220,7 +225,7 @@ double MSL(matrix matA, matrix matB){
 
 void* MSL_dx(matrix matA, matrix matB, matrix matC){
     for(int i = 0; i < matA.size; i++){
-        matC.data[i] = (-2/(double)matA.size) * (matA.data[i]-matB.data[i]);
+        matC.data[i] = (-2/(float)matA.size) * (matA.data[i]-matB.data[i]);
     }
 
 
@@ -261,6 +266,16 @@ Models
 */
 
 
+/*
+Trains weight+bias pair on data using logistic regression.
+
+Inputs
+- X,y: Training data
+- W,b: weight+bias to be learnt
+- activation: function used for activation
+- lr: learning rate
+- epochs: total runs through data
+*/
 void* LogisticRegression(matrix X, matrix y, 
                          matrix W, matrix b,
                          double (*activation)(double),
@@ -270,44 +285,25 @@ void* LogisticRegression(matrix X, matrix y,
     int N = X.shape[0];
     int in_dim = X.shape[1];
 
-    double current_data[ARRAY_BUFFER];
-    int current_data_shape[2] = {1, in_dim};
-    matrix mat_current_data = {.data=current_data, .shape=current_data_shape};
-    update_mat(&mat_current_data, MAT_2D);
 
-    double current_data_T[ARRAY_BUFFER];
-    int current_data_T_shape[2] = {in_dim, 1};
-    matrix mat_current_data_T = {.data=current_data_T, .shape=current_data_T_shape};
-    update_mat(&mat_current_data_T, MAT_2D);
+    GEN_MATRIX(current_data, current_data_shape, mat_current_data, 1, in_dim);
+
+    GEN_MATRIX(current_data_T, current_data_T_shape, mat_current_data_T, in_dim, 1);
+
 
 
     int out_dim = y.shape[1];
 
-    double current_label[ARRAY_BUFFER];
-    int current_label_shape[2] = {1, out_dim};
-    matrix mat_current_label = {.data=current_label, .shape=current_label_shape};
-    update_mat(&mat_current_label, MAT_2D);
+    GEN_MATRIX(current_label, current_label_shape, mat_current_label, 1, out_dim);
+
+    GEN_MATRIX(z, z_shape, mat_z, b.shape[0], b.shape[1]);
 
 
-    double z[ARRAY_BUFFER];
-    int z_shape[2] = {b.shape[0], b.shape[1]};
-    matrix mat_z = {.data=z, .shape=z_shape};
-    update_mat(&mat_z, MAT_2D);
+    GEN_MATRIX(loss_dx, loss_dx_shape, mat_loss_dx, 1, out_dim);
 
-    double loss_dx[ARRAY_BUFFER];
-    int loss_dx_shape[2] = {1, out_dim};
-    matrix mat_loss_dx = {.data=loss_dx, .shape=loss_dx_shape};
-    update_mat(&mat_loss_dx, MAT_2D);
+    GEN_MATRIX(W_dx, W_dx_shape, mat_W_dx, W.shape[1], W.shape[0]);
 
-    double W_dx[ARRAY_BUFFER];
-    int W_dx_shape[2] = {W.shape[1], W.shape[0]};
-    matrix mat_W_dx = {.data=W_dx, .shape=W_dx_shape};
-    update_mat(&mat_W_dx, MAT_2D);
-
-    double dw[ARRAY_BUFFER];
-    int dw_shape[2] = {W.shape[0], W.shape[1]};
-    matrix mat_dw = {.data=dw, .shape=dw_shape};
-    update_mat(&mat_dw, MAT_2D);
+    GEN_MATRIX(dw, dw_shape, mat_dw, W.shape[0], W.shape[1]);
 
 
 
@@ -356,19 +352,17 @@ void* LogisticRegression(matrix X, matrix y,
 int main(int argc, char** argv){
     srand(time(NULL));
 
-    double W[ARRAY_BUFFER];
 
-    int W_shape[2] = {1, 4};
-    matrix matW = {.data=W, .shape=W_shape};
-    update_mat(&matW, MAT_2D);
+    //Logistic Regression
+
+    GEN_MATRIX(W, W_shape, matW, 1, 4);
     mat_randn(matW);
 
 
-    double b[ARRAY_BUFFER];
-    int b_shape[2] = {1, 1};
-    matrix matb = {.data=b, .shape=b_shape};
-    update_mat(&matb, MAT_2D);
-    mat_ones(matb);
+    GEN_MATRIX(b, b_shape, matb, 1, 1);
+    mat_zeros(matb);
+
+    
 
 
     double X[ARRAY_BUFFER] = {.1, 3.5, 1.4, 0.2, 4.9, 3. , 1.4, 0.2, 4.7, 3.2, 1.3, 0.2, 4.6,
@@ -419,6 +413,25 @@ int main(int argc, char** argv){
 
 
     LogisticRegression(matX, maty, matW, matb, sigmoid, 0.01, 10);
+
+    //Sample Prediction
+
+    double X_sample[ARRAY_BUFFER] = {5.7, 2.8, 4.1, 1.3};
+    int X_sample_shape[2] = {4, 1};
+    matrix matX_sample = {.data=X_sample, .shape=X_sample_shape};
+    update_mat(&matX_sample, MAT_2D);
+
+    double z[ARRAY_BUFFER];
+    int z_shape[2] = {1, 1};
+    matrix matz = {.data=z, .shape=z_shape};
+    update_mat(&matz, MAT_2D);  
+
+    printf("\nInput:\n");
+    print_matrix(matX_sample);
+
+    mat_lineartransform(matW, matX_sample, matb, matz, sigmoid);
+
+    printf("\nPredicted: %f | Truth %f\n", matz.data[0], y[99]);
 
     return 0;
 }
